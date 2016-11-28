@@ -9,6 +9,12 @@ def skeletonAppGitUrl = "ssh://jenkins@gerrit:29418/${PROJECT_NAME}/" + skeleton
 def regressionTestGitRepo = "YOUR_REGRESSION_TEST_REPO"
 def regressionTestGitUrl = "ssh://jenkins@gerrit:29418/${PROJECT_NAME}/" + regressionTestGitRepo
 
+// ** The logrotator variables should be changed to meet your build archive requirements
+def logRotatorDaysToKeep = 7
+def logRotatorBuildNumToKeep = 7
+def logRotatorArtifactsNumDaysToKeep = 7
+def logRotatorArtifactsNumToKeep = 7
+
 // Jobs
 def buildAppJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Build")
 def unitTestJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Unit_Tests")
@@ -34,63 +40,58 @@ pipelineView.with{
 // New jobs can be introduced into the pipeline as required
 
 buildAppJob.with{
-	description("Skeleton application build job.")
-	scm{
-		git{
-			remote{
-				url(skeletonAppGitUrl)
-				credentials("adop-jenkins-master")
-			}
-			branch("*/master")
-		}
-	}
-	environmentVariables {
+  description("Skeleton application build job.")
+  logRotator {
+    daysToKeep(logRotatorDaysToKeep)
+    numToKeep(logRotatorBuildNumToKeep)
+    artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
+    artifactNumToKeep(logRotatorArtifactsNumToKeep)
+  }
+  scm{
+    git{
+      remote{
+        url(skeletonAppGitUrl)
+        credentials("adop-jenkins-master")
+      }
+      branch("*/master")
+    }
+  }
+  environmentVariables {
       env('WORKSPACE_NAME',workspaceFolderName)
       env('PROJECT_NAME',projectFolderName)
+  }
+  label("docker")
+  wrappers {
+    preBuildCleanup()
+    injectPasswords()
+    maskPasswords()
+    sshAgent("adop-jenkins-master")
+  }
+  triggers {
+    gerrit {
+      events {
+          refUpdated()
+      }
+      project(projectFolderName + '/' + skeletonAppGitUrl, 'plain:master')
+      configure { node ->
+          node / serverName("ADOP Gerrit")
+      }
     }
-	label("docker")
-	wrappers {
-		preBuildCleanup()
-		injectPasswords()
-		maskPasswords()
-		sshAgent("adop-jenkins-master")
-	}
-	triggers{
-		gerrit{
-		  events{
-			refUpdated()
-		  }
-		  configure { gerritxml ->
-			gerritxml / 'gerritProjects' {
-			  'com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject' {
-				compareType("PLAIN")
-				pattern(projectFolderName + "/" + skeletonAppgitRepo)
-				'branches' {
-				  'com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch' {
-					compareType("PLAIN")
-					pattern("master")
-				  }
-				}
-			  }
-			}
-			gerritxml / serverName("ADOP Gerrit")
-		  }
-		}
-	}
-	steps {
-		shell('''## YOUR BUILD STEPS GO HERE'''.stripMargin())
-	}
-	publishers{
-		downstreamParameterized{
-		  trigger(projectFolderName + "/Skeleton_Application_Unit_Tests"){
-			condition("UNSTABLE_OR_BETTER")
-			parameters{
-			  predefinedProp("B",'${BUILD_NUMBER}')
-			  predefinedProp("PARENT_BUILD", '${JOB_NAME}')
-			}
-		  }
-		}
-	}
+  }
+  steps {
+    shell('''## YOUR BUILD STEPS GO HERE'''.stripMargin())
+  }
+  publishers{
+    downstreamParameterized{
+      trigger(projectFolderName + "/Skeleton_Application_Unit_Tests"){
+        condition("UNSTABLE_OR_BETTER")
+        parameters{
+          predefinedProp("B",'${BUILD_NUMBER}')
+          predefinedProp("PARENT_BUILD", '${JOB_NAME}')
+        }
+      }
+    }
+  }
 }
 
 unitTestJob.with{
@@ -98,6 +99,12 @@ unitTestJob.with{
   parameters{
     stringParam("B",'',"Parent build number")
     stringParam("PARENT_BUILD","Skeleton_Application_Build","Parent build name")
+  }
+  logRotator {
+    daysToKeep(logRotatorDaysToKeep)
+    numToKeep(logRotatorBuildNumToKeep)
+    artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
+    artifactNumToKeep(logRotatorArtifactsNumToKeep)
   }
   wrappers {
     preBuildCleanup()
@@ -134,6 +141,12 @@ codeAnalysisJob.with{
     stringParam("B",'',"Parent build number")
     stringParam("PARENT_BUILD","Skeleton_Application_Build","Parent build name")
   }
+  logRotator {
+    daysToKeep(logRotatorDaysToKeep)
+    numToKeep(logRotatorBuildNumToKeep)
+    artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
+    artifactNumToKeep(logRotatorArtifactsNumToKeep)
+  }
   environmentVariables {
       env('WORKSPACE_NAME',workspaceFolderName)
       env('PROJECT_NAME',projectFolderName)
@@ -167,6 +180,12 @@ deployJob.with{
     stringParam("B",'',"Parent build number")
     stringParam("PARENT_BUILD","Skeleton_Application_Build","Parent build name")
     stringParam("ENVIRONMENT_NAME","CI","Name of the environment.")
+  }
+  logRotator {
+    daysToKeep(logRotatorDaysToKeep)
+    numToKeep(logRotatorBuildNumToKeep)
+    artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
+    artifactNumToKeep(logRotatorArtifactsNumToKeep)
   }
   wrappers {
     preBuildCleanup()
@@ -202,6 +221,12 @@ regressionTestJob.with{
     stringParam("B",'',"Parent build number")
     stringParam("PARENT_BUILD","Skeleton_Application_Build","Parent build name")
     stringParam("ENVIRONMENT_NAME","CI","Name of the environment.")
+  }
+  logRotator {
+    daysToKeep(logRotatorDaysToKeep)
+    numToKeep(logRotatorBuildNumToKeep)
+    artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
+    artifactNumToKeep(logRotatorArtifactsNumToKeep)
   }
   scm{
     git{
