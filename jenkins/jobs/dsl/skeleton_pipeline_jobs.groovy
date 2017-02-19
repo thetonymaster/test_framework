@@ -1,13 +1,17 @@
+
+import pluggable.scm.*;
+
+SCMProvider scmProvider = SCMProviderHandler.getScmProvider("${SCM_PROVIDER_ID}", binding.variables)
+
 // Folders
 def workspaceFolderName = "${WORKSPACE_NAME}"
 def projectFolderName = "${PROJECT_NAME}"
+def projectScmNamespace = "${SCM_NAMESPACE}"
 
 // Variables
 // **The git repo variables will be changed to the users' git repositories manually in the Jenkins jobs**
 def skeletonAppgitRepo = "YOUR_APPLICATION_REPO"
-def skeletonAppGitUrl = "ssh://jenkins@gerrit:29418/${PROJECT_NAME}/" + skeletonAppgitRepo
 def regressionTestGitRepo = "YOUR_REGRESSION_TEST_REPO"
-def regressionTestGitUrl = "ssh://jenkins@gerrit:29418/${PROJECT_NAME}/" + regressionTestGitRepo
 
 // ** The logrotator variables should be changed to meet your build archive requirements
 def logRotatorDaysToKeep = 7
@@ -47,15 +51,7 @@ buildAppJob.with{
     artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
     artifactNumToKeep(logRotatorArtifactsNumToKeep)
   }
-  scm{
-    git{
-      remote{
-        url(skeletonAppGitUrl)
-        credentials("adop-jenkins-master")
-      }
-      branch("*/master")
-    }
-  }
+  scm scmProvider.get(projectScmNamespace, skeletonAppgitRepo, "*/master", "adop-jenkins-master", null)
   environmentVariables {
       env('WORKSPACE_NAME',workspaceFolderName)
       env('PROJECT_NAME',projectFolderName)
@@ -67,17 +63,7 @@ buildAppJob.with{
     maskPasswords()
     sshAgent("adop-jenkins-master")
   }
-  triggers {
-    gerrit {
-      events {
-          refUpdated()
-      }
-      project(projectFolderName + '/' + skeletonAppGitUrl, 'plain:master')
-      configure { node ->
-          node / serverName("ADOP Gerrit")
-      }
-    }
-  }
+  triggers scmProvider.trigger(projectScmNamespace, skeletonAppgitRepo, "master")
   steps {
     shell('''## YOUR BUILD STEPS GO HERE'''.stripMargin())
   }
@@ -228,15 +214,7 @@ regressionTestJob.with{
     artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
     artifactNumToKeep(logRotatorArtifactsNumToKeep)
   }
-  scm{
-    git{
-      remote{
-        url(regressionTestGitUrl)
-        credentials("adop-jenkins-master")
-      }
-      branch("*/master")
-    }
-  }
+  scm scmProvider.get(projectFolderName, regressionTestGitRepo, "*/master", "adop-jenkins-master", null)
   wrappers {
     preBuildCleanup()
     injectPasswords()
