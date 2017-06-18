@@ -6,14 +6,10 @@ import pluggable.scm.*
 import org.yaml.snakeyaml.Yaml
 
 Yaml yaml = new Yaml()
-def obj = yaml.load("""
-something: 'my datas'
-size: 3
-isEmpty: false
-""")
 
+List example = parser.load(("example.yaml" as File).text)
 
-println obj.something
+example.each{println it.subject}
 
 
 // SCMProvider scmProvider = SCMProviderHandler.getScmProvider("${SCM_PROVIDER_ID}", binding.variables)
