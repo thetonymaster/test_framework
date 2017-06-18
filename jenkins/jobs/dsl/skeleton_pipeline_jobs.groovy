@@ -1,7 +1,7 @@
 
 import pluggable.scm.*
-import org.yaml.snakeyaml.Yaml
 
+this.getClass().classLoader.rootLoader.addURL(new File("snakeyaml-1.18.jar").toURL())
 
 Yaml yaml = new Yaml()
 def obj = yaml.load("""
