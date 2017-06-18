@@ -6,7 +6,7 @@ something: 'my datas'
 size: 3
 isEmpty: false
 """
-println datas.something
+println datas.text.something
 
 // SCMProvider scmProvider = SCMProviderHandler.getScmProvider("${SCM_PROVIDER_ID}", binding.variables)
 // 
