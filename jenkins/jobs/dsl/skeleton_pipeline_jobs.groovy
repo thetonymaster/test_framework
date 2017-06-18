@@ -1,5 +1,6 @@
 
-import pluggable.scm.*;
+import pluggable.scm.*
+import org.yaml.snakeyaml.Yaml
 
 stage('read file') {
   def datas = readYaml text: """
