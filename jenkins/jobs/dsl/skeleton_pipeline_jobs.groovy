@@ -2,20 +2,21 @@
 import pluggable.scm.*
 
 @Grab(group='org.yaml', module='snakeyaml', version='1.18') 
-
 import org.yaml.snakeyaml.Yaml
+
+// Folders
+def workspaceFolderName = "${WORKSPACE_NAME}"
 
 Yaml yaml = new Yaml()
 
-List example = yaml.load(("example.yaml" as File).text)
+List example = yaml.load(("./example.yaml" as File).text)
 
 example.each{println it.subject}
 
 
 // SCMProvider scmProvider = SCMProviderHandler.getScmProvider("${SCM_PROVIDER_ID}", binding.variables)
 // 
-// // Folders
-// def workspaceFolderName = "${WORKSPACE_NAME}"
+
 // def projectFolderName = "${PROJECT_NAME}"
 // def projectScmNamespace = "${SCM_NAMESPACE}"
 // 
