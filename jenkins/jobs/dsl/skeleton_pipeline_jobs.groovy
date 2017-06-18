@@ -1,7 +1,7 @@
 
 import pluggable.scm.*
 
-this.getClass().classLoader.rootLoader.addURL(new File("snakeyaml-1.18.jar").toURL())
+@Grab(group='org.yaml', module='snakeyaml', version='1.13') 
 
 Yaml yaml = new Yaml()
 def obj = yaml.load("""
