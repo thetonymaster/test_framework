@@ -6,7 +6,9 @@ something: 'my datas'
 size: 3
 isEmpty: false
 """
-println datas.text.something
+assert datas.something == 'my datas'
+assert datas.size == 3
+assert datas.isEmpty == false
 
 // SCMProvider scmProvider = SCMProviderHandler.getScmProvider("${SCM_PROVIDER_ID}", binding.variables)
 // 
