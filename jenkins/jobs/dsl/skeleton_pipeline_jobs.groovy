@@ -9,7 +9,7 @@ def workspaceFolderName = "${WORKSPACE_NAME}"
 
 Yaml yaml = new Yaml()
 
-List example = yaml.load((workspaceFolderName + "/example.yaml" as File).text)
+List example = yaml.load(("/var/jenkins_home/jobs/test/jobs/test_project/jobs/LoadDevCartridge/workspace/cartridge/jenkins/jobs/dsl" + "/example.yaml" as File).text)
 
 example.each{println it.subject}
 
