@@ -10,7 +10,7 @@ def projectFolderName = "${PROJECT_NAME}"
 
 Yaml yaml = new Yaml()
 
-List example = yaml.load(("/var/jenkins_home/jobs/test/jobs/test_project/jobs/LoadDevCartridge/workspace/cartridge/jenkins/jobs/dsl" + "/example.yaml" as File).text)
+def variables = yaml.load(("/var/jenkins_home/jobs/test/jobs/test_project/jobs/LoadDevCartridge/workspace/cartridge/jenkins/jobs/dsl" + "/example.yaml" as File).text)
 
 // Variables
 // **The git repo variables will be changed to the users' git repositories manually in the Jenkins jobs**
