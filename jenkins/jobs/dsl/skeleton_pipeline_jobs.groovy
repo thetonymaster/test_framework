@@ -7,7 +7,6 @@ import org.yaml.snakeyaml.Yaml
 // Folders
 def workspaceFolderName = "${WORKSPACE_NAME}"
 def projectFolderName = "${PROJECT_NAME}"
-def projectScmNamespace = "${SCM_NAMESPACE}"
 
 Yaml yaml = new Yaml()
 
