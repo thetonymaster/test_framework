@@ -6,92 +6,108 @@ import org.yaml.snakeyaml.Yaml
 
 // Folders
 def workspaceFolderName = "${WORKSPACE_NAME}"
+def projectFolderName = "${PROJECT_NAME}"
+def projectScmNamespace = "${SCM_NAMESPACE}"
 
 Yaml yaml = new Yaml()
 
 List example = yaml.load(("/var/jenkins_home/jobs/test/jobs/test_project/jobs/LoadDevCartridge/workspace/cartridge/jenkins/jobs/dsl" + "/example.yaml" as File).text)
 
-example.each{println it.subject}
-
-
-// SCMProvider scmProvider = SCMProviderHandler.getScmProvider("${SCM_PROVIDER_ID}", binding.variables)
-// 
-
-// def projectFolderName = "${PROJECT_NAME}"
-// def projectScmNamespace = "${SCM_NAMESPACE}"
-// 
-// // Variables
-// // **The git repo variables will be changed to the users' git repositories manually in the Jenkins jobs**
-// def skeletonAppgitRepo = "YOUR_APPLICATION_REPO"
+// Variables
+// **The git repo variables will be changed to the users' git repositories manually in the Jenkins jobs**
+def referenceAppgitRepo = "adop-cartridge-java"
 // def regressionTestGitRepo = "YOUR_REGRESSION_TEST_REPO"
-// 
-// // ** The logrotator variables should be changed to meet your build archive requirements
-// def logRotatorDaysToKeep = 7
-// def logRotatorBuildNumToKeep = 7
-// def logRotatorArtifactsNumDaysToKeep = 7
-// def logRotatorArtifactsNumToKeep = 7
-// 
-// // Jobs
-// def buildAppJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Build")
-// def unitTestJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Unit_Tests")
-// def codeAnalysisJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Code_Analysis")
-// def deployJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Deploy")
-// def regressionTestJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Regression_Tests")
-// 
-// // Views
-// def pipelineView = buildPipelineView(projectFolderName + "/Skeleton_Application")
-// 
-// pipelineView.with{
-//     title('Skeleton Application Pipeline')
-//     displayedBuilds(5)
-//     selectedJob(projectFolderName + "/Skeleton_Application_Build")
-//     showPipelineParameters()
-//     showPipelineDefinitionHeader()
-//     refreshFrequency(5)
-// }
-// 
-// // All jobs are tied to build on the Jenkins slave
-// // The functional build steps for each job have been left empty
-// // A default set of wrappers have been used for each job
-// // New jobs can be introduced into the pipeline as required
-// 
-// buildAppJob.with{
-//   description("Skeleton application build job.")
-//   logRotator {
-//     daysToKeep(logRotatorDaysToKeep)
-//     numToKeep(logRotatorBuildNumToKeep)
-//     artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
-//     artifactNumToKeep(logRotatorArtifactsNumToKeep)
-//   }
-//   scm scmProvider.get(projectScmNamespace, skeletonAppgitRepo, "*/master", "adop-jenkins-master", null)
-//   environmentVariables {
-//       env('WORKSPACE_NAME',workspaceFolderName)
-//       env('PROJECT_NAME',projectFolderName)
-//   }
-//   label("docker")
-//   wrappers {
-//     preBuildCleanup()
-//     injectPasswords()
-//     maskPasswords()
-//     sshAgent("adop-jenkins-master")
-//   }
-//   triggers scmProvider.trigger(projectScmNamespace, skeletonAppgitRepo, "master")
-//   steps {
-//     shell('''## YOUR BUILD STEPS GO HERE'''.stripMargin())
-//   }
-//   publishers{
-//     downstreamParameterized{
-//       trigger(projectFolderName + "/Skeleton_Application_Unit_Tests"){
-//         condition("UNSTABLE_OR_BETTER")
-//         parameters{
-//           predefinedProp("B",'${BUILD_NUMBER}')
-//           predefinedProp("PARENT_BUILD", '${JOB_NAME}')
-//         }
-//       }
-//     }
-//   }
-// }
-// 
+
+
+// ** The logrotator variables should be changed to meet your build archive requirements
+def logRotatorDaysToKeep = 7
+def logRotatorBuildNumToKeep = 7
+def logRotatorArtifactsNumDaysToKeep = 7
+def logRotatorArtifactsNumToKeep = 7
+
+// Jobs
+def buildAppJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Build")
+def unitTestJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Unit_Tests")
+def codeAnalysisJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Code_Analysis")
+def deployJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Deploy")
+def regressionTestJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Regression_Tests")
+
+// Views
+def pipelineView = buildPipelineView(projectFolderName + "/Skeleton_Application")
+
+pipelineView.with{
+    title('Skeleton Application Pipeline')
+    displayedBuilds(5)
+    selectedJob(projectFolderName + "/Skeleton_Application_Build")
+    showPipelineParameters()
+    showPipelineDefinitionHeader()
+    refreshFrequency(5)
+}
+
+
+
+
+// All jobs are tied to build on the Jenkins slave
+// The functional build steps for each job have been left empty
+// A default set of wrappers have been used for each job
+// New jobs can be introduced into the pipeline as required
+
+buildAppJob.with{
+  description("Test ")
+  logRotator {
+    daysToKeep(logRotatorDaysToKeep)
+    numToKeep(logRotatorBuildNumToKeep)
+    artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
+    artifactNumToKeep(logRotatorArtifactsNumToKeep)
+  }
+  
+  scm {
+        git {
+            remote {
+                url(referenceAppGitUrl)
+                credentials("adop-jenkins-master")
+            }
+            branch("*/master")
+        }
+    }
+
+  environmentVariables {
+      env('WORKSPACE_NAME',workspaceFolderName)
+      env('PROJECT_NAME',projectFolderName)
+  }
+  label("java8")
+  triggers {
+      gerrit {
+          events {
+              refUpdated()
+          }
+          project(projectFolderName + '/' + referenceAppgitRepo, 'plain:master')
+          configure { node ->
+              node / serverName("ADOP Gerrit")
+          }
+      }
+  }
+  steps {
+      maven {
+          goals('clean install -DskipTests')
+          mavenInstallation("ADOP Maven")
+      }
+  }
+  publishers{
+    downstreamParameterized{
+      trigger(projectFolderName + "/Skeleton_Application_Unit_Tests"){
+        condition("UNSTABLE_OR_BETTER")
+        parameters{
+          predefinedProp("B",'${BUILD_NUMBER}')
+          predefinedProp("PARENT_BUILD", '${JOB_NAME}')
+        }
+      }
+    }
+  }
+}
+
+
+
 // unitTestJob.with{
 //   description("This job runs unit tests on our skeleton application.")
 //   parameters{
