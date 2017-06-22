@@ -27,19 +27,22 @@ def logRotatorArtifactsNumDaysToKeep = 7
 def logRotatorArtifactsNumToKeep = 7
 
 // Jobs
-def buildAppJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Build")
-def unitTestJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Unit_Tests")
-def codeAnalysisJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Code_Analysis")
-def deployJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Deploy")
-def regressionTestJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Regression_Tests")
+def buildAppJob = freeStyleJob(projectFolderName + "/Test_Framework_Build")
+def analyzeScriptsJob = freeStyleJob(projectFolderName + "/Test_Framework_Analyze_Scripts")
+def analyzeTestsJob = freeStyleJob(projectFolderName + "/Test_Framework_Analyze_Tests")
+
+// def unitTestJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Unit_Tests")
+// def codeAnalysisJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Code_Analysis")
+// def deployJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Deploy")
+// def regressionTestJob = freeStyleJob(projectFolderName + "/Skeleton_Application_Regression_Tests")
 
 // Views
-def pipelineView = buildPipelineView(projectFolderName + "/Skeleton_Application")
+def pipelineView = buildPipelineView(projectFolderName + "/Test_Framework_Application")
 
 pipelineView.with{
     title('Skeleton Application Pipeline')
     displayedBuilds(5)
-    selectedJob(projectFolderName + "/Skeleton_Application_Build")
+    selectedJob(projectFolderName + "/Test_Framework_Build")
     showPipelineParameters()
     showPipelineDefinitionHeader()
     refreshFrequency(5)
@@ -54,7 +57,7 @@ pipelineView.with{
 // New jobs can be introduced into the pipeline as required
 
 buildAppJob.with{
-  description("Test ")
+  description("Build job ")
   logRotator {
     daysToKeep(logRotatorDaysToKeep)
     numToKeep(logRotatorBuildNumToKeep)
@@ -96,7 +99,7 @@ buildAppJob.with{
   }
   publishers{
     downstreamParameterized{
-      trigger(projectFolderName + "/Skeleton_Application_Unit_Tests"){
+      trigger(projectFolderName + "/Test_Framework_Analyze_Scripts"){
         condition("UNSTABLE_OR_BETTER")
         parameters{
           predefinedProp("B",'${BUILD_NUMBER}')
@@ -107,88 +110,84 @@ buildAppJob.with{
   }
 }
 
+analyzeScriptsJob.with{
+  description("This job analyzes the test scripts.")
+  parameters{
+    stringParam("B",'',"Parent build number")
+    stringParam("PARENT_BUILD","Test_Framework_Build","Parent build name")
+  }
+  logRotator {
+    daysToKeep(logRotatorDaysToKeep)
+    numToKeep(logRotatorBuildNumToKeep)
+    artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
+    artifactNumToKeep(logRotatorArtifactsNumToKeep)
+  }
+  environmentVariables {
+      env('WORKSPACE_NAME',workspaceFolderName)
+      env('PROJECT_NAME',projectFolderName)
+  }
+  wrappers {
+    preBuildCleanup()
+    injectPasswords()
+    maskPasswords()
+    sshAgent("adop-jenkins-master")
+  }
+  label("docker")
+  steps {
+    shell('''## YOUR CODE ANALYSIS STEPS GO HERE'''.stripMargin())
+  }
+  publishers{
+    downstreamParameterized{
+      trigger(projectFolderName + "/Test_Framework_Analyze_Tests"){
+        condition("UNSTABLE_OR_BETTER")
+        parameters{
+          predefinedProp("B",'${B}')
+          predefinedProp("PARENT_BUILD", '${PARENT_BUILD}')
+        }
+      }
+    }
+  }
+}
 
+analyzeTestsJob.with{
+  description("This job analyzes the tests.")
+  parameters{
+    stringParam("B",'',"Parent build number")
+    stringParam("PARENT_BUILD","Test_Framework_Build","Parent build name")
+  }
+  logRotator {
+    daysToKeep(logRotatorDaysToKeep)
+    numToKeep(logRotatorBuildNumToKeep)
+    artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
+    artifactNumToKeep(logRotatorArtifactsNumToKeep)
+  }
+  environmentVariables {
+      env('WORKSPACE_NAME',workspaceFolderName)
+      env('PROJECT_NAME',projectFolderName)
+  }
+  wrappers {
+    preBuildCleanup()
+    injectPasswords()
+    maskPasswords()
+    sshAgent("adop-jenkins-master")
+  }
+  label("docker")
+  steps {
+    shell('''## YOUR CODE ANALYSIS STEPS GO HERE'''.stripMargin())
+  }
+  publishers{
+    downstreamParameterized{
+      trigger(projectFolderName + "/Test_Framework_Analyze_Scripts"){
+        condition("UNSTABLE_OR_BETTER")
+        parameters{
+          predefinedProp("B",'${B}')
+          predefinedProp("PARENT_BUILD", '${PARENT_BUILD}')
+        }
+      }
+    }
+  }
+}
 
-// unitTestJob.with{
-//   description("This job runs unit tests on our skeleton application.")
-//   parameters{
-//     stringParam("B",'',"Parent build number")
-//     stringParam("PARENT_BUILD","Skeleton_Application_Build","Parent build name")
-//   }
-//   logRotator {
-//     daysToKeep(logRotatorDaysToKeep)
-//     numToKeep(logRotatorBuildNumToKeep)
-//     artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
-//     artifactNumToKeep(logRotatorArtifactsNumToKeep)
-//   }
-//   wrappers {
-//     preBuildCleanup()
-//     injectPasswords()
-//     maskPasswords()
-//     sshAgent("adop-jenkins-master")
-//   }
-//   environmentVariables {
-//       env('WORKSPACE_NAME',workspaceFolderName)
-//       env('PROJECT_NAME',projectFolderName)
-//   }
-//   label("docker")
-//   steps {
-//   }
-//   steps {
-//     shell('''## YOUR UNIT TESTING STEPS GO HERE'''.stripMargin())
-//   }
-//   publishers{
-//     downstreamParameterized{
-//       trigger(projectFolderName + "/Skeleton_Application_Code_Analysis"){
-//         condition("UNSTABLE_OR_BETTER")
-//         parameters{
-//           predefinedProp("B",'${B}')
-//           predefinedProp("PARENT_BUILD",'${PARENT_BUILD}')
-//         }
-//       }
-//     }
-//   }
-// }
-// 
-// codeAnalysisJob.with{
-//   description("This job runs code quality analysis for our skeleton application using SonarQube.")
-//   parameters{
-//     stringParam("B",'',"Parent build number")
-//     stringParam("PARENT_BUILD","Skeleton_Application_Build","Parent build name")
-//   }
-//   logRotator {
-//     daysToKeep(logRotatorDaysToKeep)
-//     numToKeep(logRotatorBuildNumToKeep)
-//     artifactDaysToKeep(logRotatorArtifactsNumDaysToKeep)
-//     artifactNumToKeep(logRotatorArtifactsNumToKeep)
-//   }
-//   environmentVariables {
-//       env('WORKSPACE_NAME',workspaceFolderName)
-//       env('PROJECT_NAME',projectFolderName)
-//   }
-//   wrappers {
-//     preBuildCleanup()
-//     injectPasswords()
-//     maskPasswords()
-//     sshAgent("adop-jenkins-master")
-//   }
-//   label("docker")
-//   steps {
-//     shell('''## YOUR CODE ANALYSIS STEPS GO HERE'''.stripMargin())
-//   }
-//   publishers{
-//     downstreamParameterized{
-//       trigger(projectFolderName + "/Skeleton_Application_Deploy"){
-//         condition("UNSTABLE_OR_BETTER")
-//         parameters{
-//           predefinedProp("B",'${B}')
-//           predefinedProp("PARENT_BUILD", '${PARENT_BUILD}')
-//         }
-//       }
-//     }
-//   }
-// }
-// 
 // deployJob.with{
 //   description("This job deploys the skeleton application to the CI environment")
 //   parameters{
