@@ -14,7 +14,9 @@ def variables = yaml.load(("/var/jenkins_home/jobs/test/jobs/test_project/jobs/L
 
 // Variables
 // **The git repo variables will be changed to the users' git repositories manually in the Jenkins jobs**
-def referenceAppgitRepo = "adop-cartridge-java"
+def referenceAppgitRepo = "spring-petclinic"
+def referenceAppGitUrl = "ssh://jenkins@gerrit:29418/${PROJECT_NAME}/" + referenceAppgitRepo
+
 // def regressionTestGitRepo = "YOUR_REGRESSION_TEST_REPO"
 
 
