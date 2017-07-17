@@ -134,7 +134,7 @@ analyzeScriptsJob.with{
   }
   label("docker")
   steps {
-    shell('''## YOUR CODE ANALYSIS STEPS GO HERE'''.stripMargin())
+    shell('''ls'''.stripMargin())
   }
   publishers{
     downstreamParameterized{

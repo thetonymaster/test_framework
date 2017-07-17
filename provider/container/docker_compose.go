@@ -10,6 +10,17 @@ import (
 	"github.com/docker/libcompose/project/options"
 )
 
+type Provider interface {
+	Execute(target, task string) error
+	Kill() error
+	Run() error
+	Scale(containers map[string]int) error
+}
+
+type Container struct {
+	Provider
+}
+
 // DockerComposeGenerator generates
 type DockerComposeGenerator struct {
 	Paths []string
@@ -23,8 +34,11 @@ func NewDockerComposeGenerator(paths []string) *DockerComposeGenerator {
 }
 
 // New returns a new container provider with docker compose
-func (gen DockerComposeGenerator) New(projectName string) *DockerCompose {
-	return NewDockerCompose(projectName, gen.Paths)
+func (gen DockerComposeGenerator) New(projectName string) *Container {
+	compose := NewDockerCompose(projectName, gen.Paths)
+	return &Container{
+		compose,
+	}
 }
 
 // DockerCompose runs docker compose tasks
@@ -51,6 +65,10 @@ func NewDockerCompose(projectName string, files []string) *DockerCompose {
 	}
 }
 
+func (dc DockerCompose) Scale(containers map[string]int) error {
+	return dc.project.Scale(context.TODO(), 300, containers)
+}
+
 // Run runs the docker compose files
 func (dc DockerCompose) Run() error {
 	return dc.project.Up(context.Background(), options.Up{})
@@ -62,6 +80,6 @@ func (dc DockerCompose) Kill() error {
 }
 
 // Execute Executes a task in a container
-func (dc DockerCompose) Execute(task string) error {
+func (dc DockerCompose) Execute(target, task string) error {
 	return nil
 }

@@ -1,25 +1,27 @@
 package test
 
 import (
-	"errors"
 	"fmt"
-	"log"
+	"path/filepath"
+	"time"
+
+	"github.com/thetonymaster/test_catridge/provider/container"
 )
 
 type provider interface {
 	Run() error
 	Execute(target, task string) error
+	Scale(containers map[string]int) error
 	Kill() error
 }
 
 type generator interface {
-	New(projectName string) interface
+	New(projectName string) *container.Container
 }
 
 // JUnit runs the JUnit tests
 type JUnit struct {
-	Generator    generator
-	noContainers int
+	Generator generator
 }
 
 const JUnitProject = "junit"
@@ -27,38 +29,22 @@ const JUnitProject = "junit"
 // NewJUnit creates a new instance of a JUnit task manager
 func NewJUnit(generator generator) *JUnit {
 	return &JUnit{
-		Generator:    generator,
-		noContainers: 0,
+		Generator: generator,
 	}
 }
 
+func (junit JUnit) GetFiles(path string) {
+	files, _ := filepath.Glob("*")
+	fmt.Println(files)
+}
+
 func (junit *JUnit) RunTask() error {
-	junit.noContainers = junit.noContainers + 1
-	projectName := fmt.Sprintf("%s_%d", JUnitProject, junit.noContainers)
-
-	project := junit.Generator.New(projectName)
-	err := project.Run()
-	if err != nil {
-		log.Println(err)
-	}
-
-	err = project.Execute(projectName, "asdf")
-	if err != nil {
-		log.Println(err)
-		err = project.Kill()
-		if err != nil {
-			return errors.New("Cannot kill containers")
-		}
-
-		junit.noContainers = junit.noContainers - 1
-		return errors.New("Cannot run tasks")
-	}
-
-	err = project.Kill()
-	if err != nil {
-		return errors.New("Cannot kill containers")
-	}
-
-	junit.noContainers = junit.noContainers - 1
+	containers := junit.Generator.New(JUnitProject)
+	containers.Run()
+	containers.Scale(map[string]int{
+		"petclinic": 2,
+	})
+	time.Sleep(time.Second * 30)
+	containers.Kill()
 	return nil
 }
