@@ -134,7 +134,10 @@ analyzeScriptsJob.with{
   }
   label("docker")
   steps {
-    shell('''ls -lah'''.stripMargin())
+    shell('''set +x
+            ls -lah
+            set -x
+            '''.stripMargin())
   }
   publishers{
     downstreamParameterized{
