@@ -14,7 +14,7 @@ def variables = yaml.load(("/var/jenkins_home/jobs/test/jobs/test_project/jobs/L
 
 // Variables
 // **The git repo variables will be changed to the users' git repositories manually in the Jenkins jobs**
-def referenceAppgitRepo = "spring-petclinic"
+def referenceAppgitRepo = "pet-clinic"
 def referenceAppGitUrl = "ssh://jenkins@gerrit:29418/${PROJECT_NAME}/" + referenceAppgitRepo
 
 // def regressionTestGitRepo = "YOUR_REGRESSION_TEST_REPO"
@@ -139,6 +139,17 @@ analyzeScriptsJob.with{
             set -x
             '''.stripMargin())
   }
+  
+  scm {
+    git {
+        remote {
+            name("origin")
+            url("${environmentTemplateGitUrl}")
+            credentials("adop-jenkins-master")
+        }
+        branch("*/master")
+    }
+}
   publishers{
     downstreamParameterized{
       trigger(projectFolderName + "/Test_Framework_Analyze_Tests"){
