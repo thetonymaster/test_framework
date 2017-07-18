@@ -1,9 +1,11 @@
 package test
 
 import (
-	"fmt"
+	"os"
+	"path"
 	"path/filepath"
-	"time"
+	"regexp"
+	"strings"
 
 	"github.com/thetonymaster/test_catridge/provider/container"
 )
@@ -33,9 +35,19 @@ func NewJUnit(generator generator) *JUnit {
 	}
 }
 
-func (junit JUnit) GetFiles(path string) {
-	files, _ := filepath.Glob("*")
-	fmt.Println(files)
+func (junit JUnit) GetFiles(searchDir string) []string {
+	fileList := []string{}
+	pattern := "(.+?)((Tests.java))"
+
+	filepath.Walk(searchDir, func(filePath string, f os.FileInfo, err error) error {
+		match, _ := regexp.MatchString(pattern, filePath)
+		if match {
+			name := strings.TrimSuffix(path.Base(filePath), filepath.Ext(filePath))
+			fileList = append(fileList, name)
+		}
+		return nil
+	})
+	return fileList
 }
 
 func (junit *JUnit) RunTask() error {
@@ -44,7 +56,6 @@ func (junit *JUnit) RunTask() error {
 	containers.Scale(map[string]int{
 		"petclinic": 2,
 	})
-	time.Sleep(time.Second * 30)
 	containers.Kill()
 	return nil
 }
