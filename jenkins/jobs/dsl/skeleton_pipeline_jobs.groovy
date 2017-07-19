@@ -137,6 +137,7 @@ analyzeScriptsJob.with{
     shell('''set +x
             curl -O https://s3-us-west-1.amazonaws.com/tw-test123/provisioner
             chmod +x provisioner
+            docker-machine start default
             docker-compose up
             docker-compose down
             '''.stripMargin())
