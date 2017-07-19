@@ -135,7 +135,7 @@ analyzeScriptsJob.with{
   label("docker")
   steps {
     shell('''set +x
-            ls -lah $WORKSPACE_NAME
+            ls -lah
             set -x
             '''.stripMargin())
   }
