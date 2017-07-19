@@ -63,10 +63,14 @@ func (junit *JUnit) RunTask(tasks []string) error {
 	for _, task := range tasks {
 		t := func() {
 			log.Println("Running tests for file " + task)
+			time.Sleep(3 * time.Second)
+			start := time.Now()
 			err := containers.Execute("petclinic", task)
-			time.Sleep(3 * time.Second)
-			fmt.Println(err)
-			time.Sleep(3 * time.Second)
+			elapsed := time.Since(start)
+			log.Printf("%s took %s\n", task, elapsed)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 		junit.pool.SendWorkAsync(t, nil)
 		time.Sleep(1 * time.Second)
