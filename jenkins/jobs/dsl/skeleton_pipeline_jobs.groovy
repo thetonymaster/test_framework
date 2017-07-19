@@ -144,7 +144,7 @@ analyzeScriptsJob.with{
     git {
         remote {
             name("origin")
-            url("${environmentTemplateGitUrl}")
+            url("${referenceAppGitUrl}")
             credentials("adop-jenkins-master")
         }
         branch("*/master")
