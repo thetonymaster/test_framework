@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	pool, _ := tunny.CreatePool(2, func(f interface{}) interface{} {
+	pool, _ := tunny.CreatePool(1, func(f interface{}) interface{} {
 		input, _ := f.(func())
 		input()
 		return nil
