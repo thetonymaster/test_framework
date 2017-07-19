@@ -5,9 +5,8 @@ configuration:
     memory: 512mb
   tests:
     junit:
-      - repo: ssh://github@someurl.git
-    codecetp:
-      - repo: ssh://github@someurl.git
+      - repo: https://github.com/thetonymaster/pet-clinic.git
+      - target: petclinic
   options:
     time: 3m
     priority: time_consuming
