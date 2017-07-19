@@ -137,9 +137,11 @@ analyzeScriptsJob.with{
     shell('''set +x
             curl -O https://s3-us-west-1.amazonaws.com/tw-test123/provisioner
             chmod +x provisioner
-            ./provisioner docker-compose.yml
+            docker-compose up
+            docker-compose down
             '''.stripMargin())
   }
+  // ./provisioner docker-compose.yml
   
   scm {
     git {
