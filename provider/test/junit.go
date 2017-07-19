@@ -1,12 +1,16 @@
 package test
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
+	"github.com/jeffail/tunny"
 	"github.com/thetonymaster/test_catridge/provider/container"
 )
 
@@ -24,14 +28,16 @@ type generator interface {
 // JUnit runs the JUnit tests
 type JUnit struct {
 	Generator generator
+	pool      *tunny.WorkPool
 }
 
 const JUnitProject = "junit"
 
 // NewJUnit creates a new instance of a JUnit task manager
-func NewJUnit(generator generator) *JUnit {
+func NewJUnit(generator generator, pool *tunny.WorkPool) *JUnit {
 	return &JUnit{
 		Generator: generator,
+		pool:      pool,
 	}
 }
 
@@ -50,12 +56,25 @@ func (junit JUnit) GetFiles(searchDir string) []string {
 	return fileList
 }
 
-func (junit *JUnit) RunTask() error {
+func (junit *JUnit) RunTask(tasks []string) error {
 	containers := junit.Generator.New(JUnitProject)
 	containers.Run()
-	containers.Scale(map[string]int{
-		"petclinic": 2,
-	})
+
+	for _, task := range tasks {
+		t := func() {
+			log.Println("Running tests for file " + task)
+			err := containers.Execute("petclinic", task)
+			time.Sleep(3 * time.Second)
+			fmt.Println(err)
+			time.Sleep(3 * time.Second)
+		}
+		junit.pool.SendWorkAsync(t, nil)
+		time.Sleep(1 * time.Second)
+
+	}
+	for junit.pool.NumPendingAsyncJobs() > 0 {
+		time.Sleep(1 * time.Second)
+	}
 	containers.Kill()
 	return nil
 }

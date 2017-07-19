@@ -2,7 +2,9 @@ package container
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/docker/ctx"
@@ -71,15 +73,32 @@ func (dc DockerCompose) Scale(containers map[string]int) error {
 
 // Run runs the docker compose files
 func (dc DockerCompose) Run() error {
-	return dc.project.Up(context.Background(), options.Up{})
+	err := dc.project.Up(context.Background(), options.Up{})
+	if err != nil {
+		return err
+	}
+	err = dc.project.Kill(context.Background(), "SIGKILL", "petclinic")
+	time.Sleep(5 * time.Second)
+
+	return err
 }
 
 // Kill kills all the containers related to the project
 func (dc DockerCompose) Kill() error {
-	return dc.project.Kill(context.Background(), "SIGKILL")
+	return dc.project.Down(context.TODO(), options.Down{
+		RemoveImages:  "local",
+		RemoveOrphans: true,
+		RemoveVolume:  true,
+	})
 }
 
 // Execute Executes a task in a container
 func (dc DockerCompose) Execute(target, task string) error {
-	return nil
+	_, err := dc.project.Run(context.TODO(),
+		"petclinic",
+		[]string{"./mvnw", "test", fmt.Sprintf("-Dtest=%s", task)},
+		options.Run{
+			Detached: false,
+		})
+	return err
 }
