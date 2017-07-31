@@ -61,18 +61,8 @@ func (junit *JUnit) RunTask(tasks []string) error {
 	containers.Run()
 
 	for _, task := range tasks {
-		t := func() {
-			log.Println("Running tests for file " + task)
-			time.Sleep(3 * time.Second)
-			start := time.Now()
-			err := containers.Execute("petclinic", task)
-			elapsed := time.Since(start)
-			log.Printf("%s took %s\n", task, elapsed)
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		junit.pool.SendWorkAsync(t, nil)
+		payload := getPayload(containers, "petclinic", task)
+		junit.pool.SendWorkAsync(payload, nil)
 		time.Sleep(1 * time.Second)
 
 	}
@@ -81,4 +71,18 @@ func (junit *JUnit) RunTask(tasks []string) error {
 	}
 	containers.Kill()
 	return nil
+}
+
+func getPayload(containers *container.Container, target, task string) func() {
+	return func() {
+		time.Sleep(3 * time.Second)
+		start := time.Now()
+		taskLocal := task
+		err := containers.Execute(target, taskLocal)
+		elapsed := time.Since(start)
+		log.Printf("%s took %s\n", taskLocal, elapsed)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 }
