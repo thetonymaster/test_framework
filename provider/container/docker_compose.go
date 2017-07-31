@@ -94,11 +94,39 @@ func (dc DockerCompose) Kill() error {
 
 // Execute Executes a task in a container
 func (dc DockerCompose) Execute(target, task string) error {
-	_, err := dc.project.Run(context.TODO(),
-		"petclinic",
-		[]string{"./mvnw", "test", fmt.Sprintf("-Dtest=%s", task)},
-		options.Run{
-			Detached: false,
-		})
-	return err
+	out, errs := dc.runTask(target, task)
+	select {
+	case err := <-errs:
+		return err
+	case status := <-out:
+		if status != 0 {
+			return fmt.Errorf("Container exited with status %d", status)
+		}
+	}
+	return nil
+}
+
+func (dc DockerCompose) runTask(target, task string) (<-chan int, <-chan error) {
+	out := make(chan int, 1)
+	errs := make(chan error, 1)
+
+	go func() {
+		log.Println("Running tests for: " + task)
+		status, err := dc.project.Run(context.TODO(),
+			"petclinic",
+			[]string{"./mvnw", "test", fmt.Sprintf("-Dtest=%s", task)},
+			options.Run{
+				Detached: false,
+			})
+
+		if err != nil {
+			errs <- err
+		} else {
+			out <- status
+		}
+		close(out)
+		close(errs)
+	}()
+
+	return out, errs
 }
