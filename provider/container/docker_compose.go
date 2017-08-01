@@ -36,8 +36,8 @@ func NewDockerComposeGenerator(paths []string) *DockerComposeGenerator {
 }
 
 // New returns a new container provider with docker compose
-func (gen DockerComposeGenerator) New(projectName string) *Container {
-	compose := NewDockerCompose(projectName, gen.Paths)
+func (gen DockerComposeGenerator) New(projectName string, args ...string) *Container {
+	compose := NewDockerCompose(projectName, args[0], gen.Paths)
 	return &Container{
 		compose,
 	}
@@ -46,10 +46,11 @@ func (gen DockerComposeGenerator) New(projectName string) *Container {
 // DockerCompose runs docker compose tasks
 type DockerCompose struct {
 	project project.APIProject
+	target  string
 }
 
 // NewDockerCompose creates a
-func NewDockerCompose(projectName string, files []string) *DockerCompose {
+func NewDockerCompose(projectName string, target string, files []string) *DockerCompose {
 	context := &ctx.Context{
 		Context: project.Context{
 			ComposeFiles: files,
@@ -63,6 +64,7 @@ func NewDockerCompose(projectName string, files []string) *DockerCompose {
 	}
 
 	return &DockerCompose{
+		target:  target,
 		project: project,
 	}
 }
@@ -77,7 +79,7 @@ func (dc DockerCompose) Run() error {
 	if err != nil {
 		return err
 	}
-	err = dc.project.Kill(context.Background(), "SIGKILL", "petclinic")
+	err = dc.project.Kill(context.Background(), "SIGKILL", dc.target)
 	time.Sleep(5 * time.Second)
 
 	return err
@@ -112,7 +114,7 @@ func (dc DockerCompose) runTask(target string, task []string) (<-chan int, <-cha
 
 	go func() {
 		status, err := dc.project.Run(context.TODO(),
-			"petclinic",
+			target,
 			task,
 			options.Run{
 				Detached: false,
