@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 
 	"github.com/jeffail/tunny"
-	"github.com/thetonymaster/test_catridge/configuration"
-	"github.com/thetonymaster/test_catridge/provider/container"
-	"github.com/thetonymaster/test_catridge/provider/test"
+	"github.com/thetonymaster/test_framework/configuration"
+	"github.com/thetonymaster/test_framework/provider/container"
+	"github.com/thetonymaster/test_framework/provider/test"
 )
 
 func main() {
