@@ -22,21 +22,23 @@ type provider interface {
 }
 
 type generator interface {
-	New(projectName string) *container.Container
+	New(projectName string, args ...string) *container.Container
 }
 
 // JUnit runs the JUnit tests
 type JUnit struct {
 	Generator generator
+	Target    string
 	pool      *tunny.WorkPool
 }
 
 const JUnitProject = "junit"
 
 // NewJUnit creates a new instance of a JUnit task manager
-func NewJUnit(generator generator, pool *tunny.WorkPool) *JUnit {
+func NewJUnit(generator generator, target string, pool *tunny.WorkPool) *JUnit {
 	return &JUnit{
 		Generator: generator,
+		Target:    target,
 		pool:      pool,
 	}
 }
@@ -57,11 +59,11 @@ func (junit JUnit) GetFiles(searchDir string) []string {
 }
 
 func (junit *JUnit) RunTask(tasks []string) error {
-	containers := junit.Generator.New(JUnitProject)
+	containers := junit.Generator.New(JUnitProject, junit.Target)
 	containers.Run()
 
 	for _, task := range tasks {
-		payload := getPayload(containers, "petclinic", task)
+		payload := getPayload(containers, junit.Target, task)
 		junit.pool.SendWorkAsync(payload, nil)
 		time.Sleep(1 * time.Second)
 
