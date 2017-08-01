@@ -13,7 +13,7 @@ import (
 )
 
 type Provider interface {
-	Execute(target, task string) error
+	Execute(target string, task ...string) error
 	Kill() error
 	Run() error
 	Scale(containers map[string]int) error
@@ -93,7 +93,7 @@ func (dc DockerCompose) Kill() error {
 }
 
 // Execute Executes a task in a container
-func (dc DockerCompose) Execute(target, task string) error {
+func (dc DockerCompose) Execute(target string, task ...string) error {
 	out, errs := dc.runTask(target, task)
 	select {
 	case err := <-errs:
@@ -106,15 +106,14 @@ func (dc DockerCompose) Execute(target, task string) error {
 	return nil
 }
 
-func (dc DockerCompose) runTask(target, task string) (<-chan int, <-chan error) {
+func (dc DockerCompose) runTask(target string, task []string) (<-chan int, <-chan error) {
 	out := make(chan int, 1)
 	errs := make(chan error, 1)
 
 	go func() {
-		log.Println("Running tests for: " + task)
 		status, err := dc.project.Run(context.TODO(),
 			"petclinic",
-			[]string{"./mvnw", "test", fmt.Sprintf("-Dtest=%s", task)},
+			task,
 			options.Run{
 				Detached: false,
 			})

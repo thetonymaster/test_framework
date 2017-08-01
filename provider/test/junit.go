@@ -16,7 +16,7 @@ import (
 
 type provider interface {
 	Run() error
-	Execute(target, task string) error
+	Execute(target string, task ...string) error
 	Scale(containers map[string]int) error
 	Kill() error
 }
@@ -78,7 +78,7 @@ func getPayload(containers *container.Container, target, task string) func() {
 		time.Sleep(3 * time.Second)
 		start := time.Now()
 		taskLocal := task
-		err := containers.Execute(target, taskLocal)
+		err := containers.Execute(target, "./mvnw", "test", fmt.Sprintf("-Dtest=%s", task))
 		elapsed := time.Since(start)
 		log.Printf("%s took %s\n", taskLocal, elapsed)
 		if err != nil {
